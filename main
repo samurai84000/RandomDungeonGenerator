@@ -1,0 +1,180 @@
+import math
+import random
+
+
+class Room:
+    def __init__(self, roomtype, doorways):
+        # roomtype 1 = small, 2 = large room, 3 = loot room
+        self.roomtype = roomtype
+        self.doorways = doorways
+
+        self.coordinates = (0, 0)
+
+        # large rooms will be 3x3 grid space within an array.
+        # small rooms will be 1x1 for now.
+
+    def setcoordinates(self, x, y):
+        self.coordinates = (x, y)
+
+
+class level:
+    def __init__(self):
+
+        startroom = Room(1, 1)
+        room1 = Room(2, 4)
+        room2 = Room(2, 4)
+        room3 = Room(2, 4)
+        room4 = Room(2, 4)
+        room5 = Room(2, 4)
+        room6 = Room(2, 4)
+        room7 = Room(2, 4)
+        room8 = Room(2, 4)
+        room9 = Room(2, 4)
+        room10 = Room(2, 4)
+        # warning width and height must be even numbers, program will crash
+        self.width = 100
+        self.height = 100
+
+        self.layout = [['-'] * self.width for _ in range(100)]
+        self.rooms = [startroom, room1, room2, room3, room4, room5, room6, room7, room8, room9, room10]
+        self.doorpositions = []
+        self.removedDoors = []
+
+    def createMap(self):
+        for room in self.rooms:
+            if room.roomtype == 1:
+                middleXCoord = math.floor(self.width / 2)
+                middleYCoord = math.floor(self.height / 2)
+                self.layout[middleXCoord][middleYCoord] = 1
+                room.setcoordinates(middleXCoord, middleYCoord)
+                self.placestartingroom(middleXCoord, middleYCoord, 1)
+
+            elif room.roomtype == 2:
+                entryDoorArrayLocation = random.randint(0, len(level.doorpositions) - 1)
+                startingDoor = self.doorpositions[entryDoorArrayLocation]
+                self.placeNewRoom(startingDoor, 2, '2')
+                self.removeDoorsAfterRooms(startingDoor)
+
+
+    def removeDoorsAfterRooms(self, door):
+        #we need to remove any conflictions of doors in the new room,
+        #this also includes the door that we just added a room from
+        #meaning if we have a top door, we have to remove the bottom
+        #door that just placed the current top door.
+        self.doorpositions.remove(door)
+        self.removedDoors.append(door)
+        if door[2] == 'top':
+            #removing the door that just placed the top door
+            self.removeDoors((door[0] - 1, door[1], 'bottom', 'open'))
+            #check if new rooms doors have an opening to another room
+            self.removeDoors((door[0] + 1, door[1] - 1, 'left', 'open'))
+            self.removeDoors((door[0] + 1, door[1] + 1, 'right', 'open'))
+            self.removeDoors((door[0] + 2, door[1], 'bottom', 'open'))
+        if door[2] == 'left':
+            # removing the door that just placed the top door
+            self.removeDoors((door[0], door[1] - 1, 'right', 'open'))
+            # check if new rooms doors have an opening to another room
+            self.removeDoors((door[0] - 1, door[1] + 1, 'top', 'open'))
+            self.removeDoors((door[0], door[1] + 2, 'right', 'open'))
+            self.removeDoors((door[0] + 1, door[1] + 1, 'bottom', 'open'))
+        if door[2] == 'right':
+            # removing the door that just placed the top door
+            self.removeDoors((door[0], door[1]+1, 'left', 'open'))
+            # check if new rooms doors have an opening to another room
+            self.removeDoors((door[0] - 1, door[1] - 1, 'top', 'open'))
+            self.removeDoors((door[0], door[1] - 2, 'left', 'open'))
+            self.removeDoors((door[0] + 1, door[1] + 1, 'bottom', 'open'))
+        if door[3] == 'bottom':
+            # removing the door that just placed the top door
+            self.removeDoors((door[0] + -1, door[1], 'top', 'open'))
+            # check if new rooms doors have an opening to another room
+            self.removeDoors((door[0] - 2, door[1], 'top', 'open'))
+            self.removeDoors((door[0] - 1, door[1] - 1, 'left', 'open'))
+            self.removeDoors((door[0] + 1, door[1] + 1, 'right' 'open'))
+
+    def removeDoors(self, door):
+
+            if self.doorpositions.__contains__(door):
+                self.doorpositions.remove(door)
+                self.removedDoors.append(door)
+
+
+
+
+
+
+    def placeNewRoom(self, startingdoor, roomsize, value):
+        if startingdoor[2] == 'top' and \
+                startingdoor[3] == 'open':
+            self.set3x3Room(startingdoor[0] - roomsize, startingdoor[1], value)
+        elif startingdoor[2] == 'left' and \
+                startingdoor[3] == 'open':
+            self.set3x3Room(startingdoor[0], startingdoor[1] - roomsize, value)
+
+        elif startingdoor[2] == 'right' and \
+                startingdoor[3] == 'open':
+            self.set3x3Room(startingdoor[0], startingdoor[1] + roomsize, value)
+
+        elif startingdoor[2] == 'bottom' and \
+                startingdoor[3] == 'open':
+            self.set3x3Room(startingdoor[0] + roomsize, startingdoor[1], value)
+
+    def placestartingroom(self, startX, startY, value):
+        doorplacement = random.randint(1, 4)
+        for x in range(-1, 2):
+            for y in range(-1, 2):
+                if abs(x - y) == 1:
+                    self.layout[startX + x][startY + y] = 'D'
+                else:
+                    self.layout[startX + x][startY + y] = '1'
+
+        if doorplacement == 1:
+            self.layout[startX - 1][startY] = 'D'
+            self.doorpositions.append((startX - 1, startY, 'top', 'open'))
+        elif doorplacement == 2:
+            self.layout[startX][startY - 1] = 'D'
+            self.doorpositions.append((startX, startY - 1, 'left', 'open'))
+        elif doorplacement == 3:
+            self.layout[startX][startY + 1] = 'D'
+            self.doorpositions.append((startX, startY + 1, 'right', 'open'))
+        elif doorplacement == 4:
+            self.layout[startX + 1][startY] = 'D'
+            self.doorpositions.append((startX + 1, startY, 'bottom', 'open'))
+
+
+
+    def set3x3Room(self, startX, startY, value):
+        # this may seem strange, but the orientation of doors being placed
+        # on the 2d array is always top, left, right, bottom, so we can use
+        # a counter to keep track of the current doorposition
+        locationcounter = 0
+        for x in range(-1, 2):
+            for y in range(-1, 2):
+                if abs(x - y) == 1:
+                    self.layout[startX + x][startY + y] = 'D'
+                    if locationcounter == 0:
+                        self.doorpositions.append((startX + x, startY + y, 'top', 'open'))
+                    elif locationcounter == 1:
+                        self.doorpositions.append((startX + x, startY + y, 'left', 'open'))
+                    elif locationcounter == 2:
+                        self.doorpositions.append((startX + x, startY + y, 'right', 'open'))
+                    elif locationcounter == 3:
+                        self.doorpositions.append((startX + x, startY + y, 'bottom', 'open'))
+                    locationcounter += 1
+                else:
+                    self.layout[startX + x][startY + y] = value
+
+    def printMap(self):
+        for row in self.layout:
+            print(row)
+
+    def printdoorlocations(self):
+        for i in self.doorpositions:
+            print(i)
+
+
+if __name__ == '__main__':
+    level = level()
+    level.createMap()
+    level.printMap()
+    print('hello')
